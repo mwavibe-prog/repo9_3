@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Drop Frogs - TV Host</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:linear-gradient(135deg,#0a1628,#1a2a4a,#0d2137);font-family:'Segoe UI',Tahoma,sans-serif;min-height:100vh;overflow:hidden;color:#e0e0e0}
+
+/* HEADER */
+.header{display:flex;justify-content:center;align-items:center;gap:30px;padding:10px 30px;background:rgba(255,255,255,0.95);box-shadow:0 2px 15px rgba(0,0,0,0.2)}
+.header img{height:60px;width:auto}
+.header .title{font-size:2.2rem;font-weight:900;color:#2e7d32;letter-spacing:3px;text-shadow:1px 1px 0 #a5d6a7}
+
+/* MAIN */
+.main{height:calc(100vh - 80px);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:15px}
+.screen{display:none;width:100%;max-width:1400px;text-align:center}
+.screen.active{display:flex;flex-direction:column;align-items:center}
+
+/* LOBBY */
+.lobby-title{font-size:3rem;color:#7cff7c;margin-bottom:8px;text-shadow:0 0 20px rgba(124,255,124,0.4)}
+.lobby-sub{font-size:1.3rem;color:#aaa;margin-bottom:20px}
+.qr-box{display:flex;align-items:center;gap:25px;background:rgba(255,255,255,0.95);border-radius:20px;padding:25px 35px;margin-bottom:20px;box-shadow:0 8px 30px rgba(0,0,0,0.3)}
+.qr-box img{width:180px;height:180px;border-radius:10px}
+.qr-info h3{font-size:1.4rem;color:#2e7d32;margin-bottom:6px}
+.qr-info p{font-size:1rem;color:#666}
+.qr-info .url{font-size:1.2rem;color:#1565c0;font-weight:bold;word-break:break-all}
+.player-chips{display:flex;flex-wrap:wrap;gap:12px;justify-content:center;margin:15px 0}
+.chip{background:rgba(255,255,255,0.12);border:2px solid #4a8;border-radius:50px;padding:8px 20px;font-size:1.2rem;display:flex;align-items:center;gap:8px;animation:popIn .3s ease}
+@keyframes popIn{from{transform:scale(0);opacity:0}to{transform:scale(1);opacity:1}}
+.pcount{font-size:1.1rem;color:#888;margin-bottom:8px}
+.hint{font-size:1rem;color:#666;margin-top:8px}
+
+/* COUNTDOWN */
+.cd-num{font-size:14rem;font-weight:900;color:#7cff7c;text-shadow:0 0 40px rgba(124,255,124,0.5);animation:pulse .5s ease}
+@keyframes pulse{0%{transform:scale(1.6);opacity:0}100%{transform:scale(1);opacity:1}}
+.cd-label{font-size:2rem;color:#aaa;margin-bottom:10px}
+
+/* PLAYING */
+.play-top{display:flex;align-items:center;justify-content:space-between;width:100%;max-width:1200px;margin-bottom:15px}
+.timer-wrap{display:flex;align-items:center;gap:15px}
+.timer-text{font-size:2.5rem;font-weight:900;color:#7cff7c;min-width:80px;text-shadow:0 0 15px rgba(124,255,124,0.4)}
+.timer-text.warn{color:#ff9800}
+.timer-text.danger{color:#f44336;animation:blink .5s infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.4}}
+.timer-bar-bg{width:300px;height:14px;background:rgba(255,255,255,0.1);border-radius:7px;overflow:hidden}
+.timer-bar{height:100%;background:linear-gradient(90deg,#4caf50,#8bc34a);border-radius:7px;transition:width .3s}
+.play-layout{display:flex;gap:20px;width:100%;max-width:1200px;justify-content:center}
+
+/* LEADERBOARD */
+.lb{flex:1;max-width:450px}
+.lb h2{font-size:1.5rem;color:#7cff7c;margin-bottom:12px;letter-spacing:2px}
+.lb-item{display:flex;align-items:center;gap:12px;background:rgba(255,255,255,0.07);border-radius:12px;padding:10px 18px;margin-bottom:8px;font-size:1.2rem;transition:all .3s}
+.lb-item:first-child{background:rgba(255,215,0,0.15);border:2px solid rgba(255,215,0,0.4)}
+.lb-item .rank{font-weight:900;font-size:1.4rem;min-width:30px;color:#7cff7c}
+.lb-item:first-child .rank{color:#ffd700}
+.lb-item:nth-child(2) .rank{color:#c0c0c0}
+.lb-item:nth-child(3) .rank{color:#cd7f32}
+.lb-item .av{font-size:1.6rem}
+.lb-item .nm{flex:1;font-weight:600;text-align:left}
+.lb-item .sc{font-weight:900;color:#7cff7c;font-size:1.3rem}
+
+/* MINI BOARDS */
+.boards-grid{display:flex;flex-wrap:wrap;gap:12px;justify-content:center;flex:2}
+.mini-board{background:rgba(0,0,0,0.3);border:2px solid #3a6a5a;border-radius:10px;padding:8px;text-align:center;width:140px}
+.mini-board .mb-name{font-size:.75rem;color:#aaa;margin-bottom:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mini-board .mb-avatar{font-size:1.2rem}
+.mini-board canvas{display:block;margin:0 auto;border-radius:4px;background:#0a0f1a}
+.mini-board .mb-score{font-size:.9rem;font-weight:bold;color:#7cff7c;margin-top:4px}
+
+/* GAME OVER */
+.go-title{font-size:3.5rem;font-weight:900;color:#7cff7c;margin-bottom:8px;text-shadow:0 0 30px rgba(124,255,124,0.5)}
+.winner{font-size:2rem;margin-bottom:20px}
+.winner .wav{font-size:4rem}
+.go-hint{font-size:1rem;color:#888;margin-top:15px}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <img src="images/crest-logo.svg" alt="Crest Secondary">
+  <div class="title">🐸 DROP FROGS 🐸</div>
+  <img src="images/weeswares-logo.svg" alt="WeesWares">
+</div>
+
+<div class="main">
+  <!-- LOBBY -->
+  <div id="s-lobby" class="screen active">
+    <div class="lobby-title">Drop Frogs Puzzle</div>
+    <div class="lobby-sub">Scan the QR code on your phone to join!</div>
+    <div class="qr-box">
+      <img id="qr-img" src="" alt="QR Code">
+      <div class="qr-info">
+        <h3>Join the game!</h3>
+        <p>Scan with your phone camera</p>
+        <p>or visit:</p>
+        <p class="url" id="join-url">Loading...</p>
+      </div>
+    </div>
+    <div class="pcount" id="pcount">Waiting for players... (0/15)</div>
+    <div class="player-chips" id="pchips"></div>
+    <div class="hint">Any player can press START on their phone!</div>
+  </div>
+
+  <!-- COUNTDOWN -->
+  <div id="s-countdown" class="screen">
+    <div class="cd-label">Get Ready!</div>
+    <div class="cd-num" id="cd-num">3</div>
+  </div>
+
+  <!-- PLAYING -->
+  <div id="s-playing" class="screen">
+    <div class="play-top">
+      <div style="font-size:1.3rem;color:#aaa">🐸 Drop Frogs Multiplayer</div>
+      <div class="timer-wrap">
+        <div class="timer-bar-bg"><div class="timer-bar" id="tv-timer-bar"></div></div>
+        <div class="timer-text" id="tv-timer">2:00</div>
+      </div>
+    </div>
+    <div class="play-layout">
+      <div class="lb" id="tv-lb"></div>
+      <div class="boards-grid" id="tv-boards"></div>
+    </div>
+  </div>
+
+  <!-- GAME OVER -->
+  <div id="s-gameover" class="screen">
+    <div class="go-title">Game Over!</div>
+    <div class="winner" id="tv-winner"></div>
+    <div class="lb" id="tv-lb-final" style="max-width:600px"></div>
+    <div class="go-hint">Press PLAY AGAIN on any phone to restart!</div>
+  </div>
+</div>
+
+<script>
+(function(){
+  const COLS=6,ROWS=13,CELL_MINI=8;
+  const FROG_FILLS=["","#4caf50","#f44336","#2196f3","#ffeb3b","#9c27b0"];
+  const FROG_DARKS=["","#2e7d32","#c62828","#1565c0","#f9a825","#6a1b9a"];
+
+  const ws=new WebSocket((location.protocol==='https:'?'wss://':'ws://')+location.host);
+  const screens=document.querySelectorAll('.screen');
+  function show(id){screens.forEach(s=>s.classList.remove('active'));document.getElementById(id).classList.add('active')}
+
+  fetch('/api/qrcode').then(r=>r.json()).then(d=>{document.getElementById('qr-img').src=d.qr;document.getElementById('join-url').textContent=d.url});
+
+  ws.onopen=()=>ws.send(JSON.stringify({type:'hostJoin'}));
+
+  ws.onmessage=(e)=>{
+    const msg=JSON.parse(e.data);
+    switch(msg.type){
+      case 'gameState': handleState(msg); break;
+      case 'countdown': showCountdown(msg.count); break;
+      case 'gameStart': show('s-playing'); break;
+      case 'timeUpdate': updateTimer(msg.timeLeft,msg.duration); break;
+      case 'gameOver': showGameOver(msg.leaderboard); break;
+    }
+  };
+
+  function handleState(msg){
+    if(msg.state==='lobby'){
+      show('s-lobby');
+      document.getElementById('pcount').textContent=`Players joined: ${msg.playerCount}/15`;
+      const el=document.getElementById('pchips');el.innerHTML='';
+      msg.players.forEach(p=>{const c=document.createElement('div');c.className='chip';c.innerHTML=`<span>${p.avatar}</span> ${p.name}`;el.appendChild(c)});
+    }
+    if(msg.state==='playing'){
+      show('s-playing');
+      renderLeaderboard('tv-lb',msg.players,'LEADERBOARD');
+      renderMiniBoards(msg.players);
+      updateTimer(msg.timeLeft,msg.duration);
+    }
+  }
+
+  function showCountdown(n){
+    show('s-countdown');
+    const el=document.getElementById('cd-num');el.textContent=n;
+    el.style.animation='none';void el.offsetHeight;el.style.animation='pulse .5s ease';
+  }
+
+  function updateTimer(left,dur){
+    const s=Math.ceil(left/1000);
+    const m=Math.floor(s/60);const ss=s%60;
+    const el=document.getElementById('tv-timer');
+    el.textContent=m+':'+(ss<10?'0':'')+ss;
+    el.className='timer-text'+(s<=10?' danger':s<=30?' warn':'');
+    document.getElementById('tv-timer-bar').style.width=(left/dur*100)+'%';
+  }
+
+  function renderLeaderboard(containerId,players,title){
+    const el=document.getElementById(containerId);
+    let html=title?`<h2>${title}</h2>`:'';
+    players.forEach((p,i)=>{
+      html+=`<div class="lb-item"><span class="rank">#${i+1}</span><span class="av">${p.avatar}</span><span class="nm">${p.name}</span><span class="sc">${p.score}</span></div>`;
+    });
+    el.innerHTML=html;
+  }
+
+  function renderMiniBoards(players){
+    const container=document.getElementById('tv-boards');
+    // Reuse or create canvases
+    const existing=container.querySelectorAll('.mini-board');
+    const map={};
+    existing.forEach(el=>{map[el.dataset.pid]=el});
+
+    const activeIds=new Set(players.map(p=>p.id));
+    // Remove gone players
+    existing.forEach(el=>{if(!activeIds.has(el.dataset.pid))el.remove()});
+
+    players.forEach(p=>{
+      let wrap=map[p.id];
+      if(!wrap){
+        wrap=document.createElement('div');wrap.className='mini-board';wrap.dataset.pid=p.id;
+        wrap.innerHTML=`<div class="mb-name"><span class="mb-avatar">${p.avatar}</span> ${p.name}</div><canvas width="${COLS*CELL_MINI}" height="${(ROWS-1)*CELL_MINI}"></canvas><div class="mb-score">0</div>`;
+        container.appendChild(wrap);
+      }
+      wrap.querySelector('.mb-score').textContent=p.score+' pts';
+      const cvs=wrap.querySelector('canvas');
+      const ctx=cvs.getContext('2d');
+      ctx.clearRect(0,0,cvs.width,cvs.height);
+      ctx.fillStyle='#0a0f1a';ctx.fillRect(0,0,cvs.width,cvs.height);
+      if(p.boardSnapshot){
+        for(let r=1;r<ROWS;r++){
+          for(let c=0;c<COLS;c++){
+            const v=p.boardSnapshot[r]&&p.boardSnapshot[r][c];
+            if(v){
+              ctx.fillStyle=FROG_FILLS[v]||'#888';
+              ctx.beginPath();ctx.arc(c*CELL_MINI+CELL_MINI/2,(r-1)*CELL_MINI+CELL_MINI/2,CELL_MINI/2-1,0,Math.PI*2);ctx.fill();
+            }
+          }
+        }
+      }
+    });
+  }
+
+  function showGameOver(lb){
+    show('s-gameover');
+    if(lb.length>0){
+      document.getElementById('tv-winner').innerHTML=`<div class="wav">${lb[0].avatar}</div><div>${lb[0].name} wins with ${lb[0].score} points!</div>`;
+    }
+    renderLeaderboard('tv-lb-final',lb,'');
+  }
+})();
+</script>
+</body>
+</html>

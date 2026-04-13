@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Drop Frogs - Player</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Segoe UI',Tahoma,sans-serif;min-height:100vh;background:linear-gradient(135deg,#0a1628,#1a2a4a);display:flex;flex-direction:column;align-items:center;color:#e0e0e0;-webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent;overflow-x:hidden}
+
+.screen{display:none;width:100%;max-width:500px;padding:15px;text-align:center;flex-direction:column;align-items:center}
+.screen.active{display:flex}
+
+/* JOIN */
+.join-teto{font-size:5rem;margin:30px 0 10px}
+.join-title{font-size:2.2rem;font-weight:900;color:#7cff7c;margin-bottom:5px}
+.join-sub{color:#aaa;font-size:1.1rem;margin-bottom:25px}
+.name-input{width:100%;max-width:320px;padding:16px 22px;font-size:1.5rem;border:3px solid #4a8;border-radius:15px;text-align:center;outline:none;background:#1a2a4a;color:#fff;margin-bottom:18px}
+.name-input:focus{border-color:#7cff7c;box-shadow:0 0 0 4px rgba(124,255,124,0.2)}
+.name-input::placeholder{color:#668}
+.btn-join{width:100%;max-width:320px;padding:18px;font-size:1.6rem;font-weight:900;color:#fff;background:linear-gradient(180deg,#4caf50,#388e3c);border:none;border-radius:15px;cursor:pointer;box-shadow:0 6px 20px rgba(76,175,80,0.4);letter-spacing:2px}
+.btn-join:active{transform:scale(.95)}
+.error-msg{color:#f44336;font-size:1rem;margin-top:12px;min-height:24px}
+
+/* WAITING */
+.w-avatar{font-size:5rem;margin:25px 0 10px}
+.w-name{font-size:1.6rem;font-weight:bold;margin-bottom:6px}
+.w-msg{font-size:1.2rem;color:#aaa;margin-bottom:20px}
+.btn-start{width:100%;max-width:320px;padding:20px;font-size:1.5rem;font-weight:900;color:#fff;background:linear-gradient(180deg,#ff9800,#f57c00);border:none;border-radius:15px;cursor:pointer;box-shadow:0 6px 20px rgba(255,152,0,0.4);letter-spacing:2px}
+.btn-start:active{transform:scale(.95)}
+.dots{font-size:2rem;color:#7cff7c;animation:blink 1.5s infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+
+/* COUNTDOWN */
+.ph-cd-label{font-size:1.5rem;color:#aaa;margin-top:40px}
+.ph-cd{font-size:10rem;font-weight:900;color:#7cff7c;animation:pulse .5s ease}
+@keyframes pulse{0%{transform:scale(1.5);opacity:0}100%{transform:scale(1);opacity:1}}
+
+/* PLAYING */
+.play-info{display:flex;justify-content:space-between;width:100%;max-width:360px;margin-bottom:6px;font-size:.9rem;color:#aaa}
+.play-info .score-val{color:#7cff7c;font-weight:900;font-size:1.1rem}
+#phone-canvas{display:block;border:2px solid #4a8;border-radius:8px;background:#0a0f1a;margin-bottom:10px;touch-action:none}
+.controls{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:10px;width:100%;max-width:360px;margin-bottom:10px}
+.ctrl-btn{padding:18px 0;font-size:2rem;font-weight:900;border:none;border-radius:15px;cursor:pointer;color:#fff;transition:transform .05s;-webkit-tap-highlight-color:transparent;touch-action:manipulation}
+.ctrl-btn:active{transform:scale(.9)}
+.ctrl-left{background:linear-gradient(180deg,#42a5f5,#1976d2)}
+.ctrl-right{background:linear-gradient(180deg,#42a5f5,#1976d2)}
+.ctrl-rotate{background:linear-gradient(180deg,#ab47bc,#7b1fa2)}
+.ctrl-drop{background:linear-gradient(180deg,#ef5350,#c62828)}
+.ctrl-label{display:block;font-size:.65rem;font-weight:600;letter-spacing:1px;margin-top:2px;opacity:.8}
+
+/* GAME OVER */
+.ph-go-title{font-size:2.2rem;font-weight:900;color:#7cff7c;margin-top:30px;margin-bottom:8px}
+.ph-score{font-size:1.6rem;margin-bottom:20px}
+.btn-again{width:100%;max-width:320px;padding:20px;font-size:1.5rem;font-weight:900;color:#fff;background:linear-gradient(180deg,#4caf50,#388e3c);border:none;border-radius:15px;cursor:pointer;box-shadow:0 6px 20px rgba(76,175,80,0.4);letter-spacing:2px}
+.btn-again:active{transform:scale(.95)}
+</style>
+</head>
+<body>
+
+<!-- JOIN -->
+<div id="s-join" class="screen active">
+  <div class="join-teto">🐸</div>
+  <div class="join-title">Drop Frogs</div>
+  <div class="join-sub">Enter your name to play!</div>
+  <input type="text" id="name-input" class="name-input" placeholder="Your Name" maxlength="15" autocomplete="off">
+  <button class="btn-join" id="btn-join">JOIN GAME</button>
+  <div class="error-msg" id="err-msg"></div>
+</div>
+
+<!-- WAITING -->
+<div id="s-waiting" class="screen">
+  <div class="w-avatar" id="my-avatar">🐸</div>
+  <div class="w-name" id="my-name">Player</div>
+  <div class="w-msg">You're in! Look at the TV.</div>
+  <div class="dots">. . .</div>
+  <button class="btn-start" id="btn-start">START GAME</button>
+</div>
+
+<!-- COUNTDOWN -->
+<div id="s-cd" class="screen">
+  <div class="ph-cd-label">Get Ready!</div>
+  <div class="ph-cd" id="ph-cd">3</div>
+</div>
+
+<!-- PLAYING -->
+<div id="s-play" class="screen">
+  <div class="play-info">
+    <div>Score: <span class="score-val" id="ph-score">0</span></div>
+    <div id="ph-timer" style="color:#7cff7c;font-weight:bold">2:00</div>
+  </div>
+  <canvas id="phone-canvas"></canvas>
+  <div class="controls">
+    <button class="ctrl-btn ctrl-left" id="btn-left">⬅<span class="ctrl-label">LEFT</span></button>
+    <button class="ctrl-btn ctrl-right" id="btn-right">➡<span class="ctrl-label">RIGHT</span></button>
+    <button class="ctrl-btn ctrl-rotate" id="btn-rotate">🔄<span class="ctrl-label">TURN</span></button>
+    <button class="ctrl-btn ctrl-drop" id="btn-drop">⬇<span class="ctrl-label">DROP</span></button>
+  </div>
+</div>
+
+<!-- GAME OVER -->
+<div id="s-go" class="screen">
+  <div class="ph-go-title">Time's Up!</div>
+  <div class="ph-score" id="ph-final-score">Your score: 0</div>
+  <div style="color:#aaa;margin-bottom:20px">Look at the TV for final results!</div>
+  <button class="btn-again" id="btn-again">PLAY AGAIN</button>
+</div>
+
+<script>
+(function(){
+"use strict";
+
+// ===== CONSTANTS =====
+const COLS=6,ROWS=13,VISIBLE=12;
+const MATCH_MIN=4;
+const FROG_COLORS=[
+  {fill:"#4caf50",dark:"#2e7d32",eye:"#fff",num:1},
+  {fill:"#f44336",dark:"#c62828",eye:"#fff",num:2},
+  {fill:"#2196f3",dark:"#1565c0",eye:"#fff",num:3},
+  {fill:"#ffeb3b",dark:"#f9a825",eye:"#333",num:4},
+  {fill:"#9c27b0",dark:"#6a1b9a",eye:"#fff",num:5},
+];
+const OFFSETS=[[-1,0],[0,1],[1,0],[0,-1]];
+
+// ===== CANVAS =====
+const canvas=document.getElementById('phone-canvas');
+const ctx=canvas.getContext('2d');
+// Responsive cell size
+const maxW=Math.min(360, window.innerWidth-30);
+const CELL=Math.floor(maxW/COLS);
+canvas.width=COLS*CELL;
+canvas.height=VISIBLE*CELL;
+
+// ===== NETWORK =====
+const ws=new WebSocket((location.protocol==='https:'?'wss://':'ws://')+location.host);
+let myId=null,myName='',myAvatar='';
+
+// ===== GAME STATE =====
+let grid=[],score=0,level=1,linesCleared=0,gameActive=false,paused=false;
+let dropInterval=800,lastDrop=0,currentPair=null,nextPair=null,animating=false;
+let updateThrottle=0;
+
+function activeColors(){return Math.min(FROG_COLORS.length,3+Math.floor(level/3))}
+function mkGrid(){const g=[];for(let r=0;r<ROWS;r++){g[r]=[];for(let c=0;c<COLS;c++)g[r][c]=0}return g}
+function inBounds(r,c){return r>=0&&r<ROWS&&c>=0&&c<COLS}
+function randColor(){return Math.floor(Math.random()*activeColors())+1}
+function mkPair(){return{pivot:{r:0,c:2},rot:0,colors:[randColor(),randColor()]}}
+function compPos(p){const o=OFFSETS[p.rot];return{r:p.pivot.r+o[0],c:p.pivot.c+o[1]}}
+function pairCells(p){const cp=compPos(p);return[{r:p.pivot.r,c:p.pivot.c,color:p.colors[0]},{r:cp.r,c:cp.c,color:p.colors[1]}]}
+function canPlace(p){return pairCells(p).every(c=>inBounds(c.r,c.c)&&grid[c.r][c.c]===0)}
+
+// ===== DRAWING =====
+function drawFrog(x,y,sz,ci,ghost){
+  const f=FROG_COLORS[ci-1];if(!f)return;
+  const a=ghost?.3:1,cx=x+sz/2,cy=y+sz/2,br=sz*.38;
+  ctx.save();ctx.globalAlpha=a;
+  ctx.beginPath();ctx.arc(cx,cy,br,0,Math.PI*2);ctx.fillStyle=f.fill;ctx.fill();ctx.strokeStyle=f.dark;ctx.lineWidth=2;ctx.stroke();
+  const eox=br*.38,eoy=-br*.35,er=br*.22;
+  // eyes
+  [[-1,1],[1,1]].forEach(([dx])=>{
+    ctx.beginPath();ctx.arc(cx+dx*eox,cy+eoy,er,0,Math.PI*2);ctx.fillStyle=f.eye;ctx.fill();ctx.strokeStyle=f.dark;ctx.lineWidth=1;ctx.stroke();
+    ctx.beginPath();ctx.arc(cx+dx*eox,cy+eoy,er*.5,0,Math.PI*2);ctx.fillStyle="#111";ctx.fill();
+  });
+  // mouth
+  ctx.beginPath();ctx.arc(cx,cy+br*.05,br*.3,.15*Math.PI,.85*Math.PI);ctx.strokeStyle=f.dark;ctx.lineWidth=1.5;ctx.stroke();
+  // number
+  ctx.fillStyle=f.dark;ctx.font="bold "+Math.round(sz*.28)+"px sans-serif";ctx.textAlign="center";ctx.textBaseline="middle";ctx.fillText(f.num,cx,cy+br*.35);
+  // feet
+  ctx.fillStyle=f.dark;
+  ctx.beginPath();ctx.ellipse(cx-br*.35,cy+br*.82,br*.18,br*.1,0,0,Math.PI*2);ctx.fill();
+  ctx.beginPath();ctx.ellipse(cx+br*.35,cy+br*.82,br*.18,br*.1,0,0,Math.PI*2);ctx.fill();
+  ctx.restore();
+}
+
+function drawBoard(){
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  // grid lines
+  ctx.strokeStyle="rgba(60,120,100,0.12)";ctx.lineWidth=1;
+  for(let r=0;r<=VISIBLE;r++){ctx.beginPath();ctx.moveTo(0,r*CELL);ctx.lineTo(COLS*CELL,r*CELL);ctx.stroke()}
+  for(let c=0;c<=COLS;c++){ctx.beginPath();ctx.moveTo(c*CELL,0);ctx.lineTo(c*CELL,VISIBLE*CELL);ctx.stroke()}
+  // landed
+  for(let r=1;r<ROWS;r++)for(let c=0;c<COLS;c++)if(grid[r][c])drawFrog(c*CELL,(r-1)*CELL,CELL,grid[r][c],false);
+  // current + ghost
+  if(currentPair&&!animating){
+    const gh=ghostPos();
+    if(gh)pairCells(gh).forEach(c=>{if(c.r>=1)drawFrog(c.c*CELL,(c.r-1)*CELL,CELL,c.color,true)});
+    pairCells(currentPair).forEach(c=>{if(c.r>=1)drawFrog(c.c*CELL,(c.r-1)*CELL,CELL,c.color,false)});
+  }
+}
+
+function ghostPos(){
+  if(!currentPair)return null;
+  const g={pivot:{...currentPair.pivot},rot:currentPair.rot,colors:[...currentPair.colors]};
+  while(true){g.pivot.r++;if(!canPlace(g)){g.pivot.r--;break}}return g;
+}
+
+// ===== MOVEMENT =====
+function move(dr,dc){
+  if(!currentPair||animating||!gameActive)return false;
+  const t={pivot:{r:currentPair.pivot.r+dr,c:currentPair.pivot.c+dc},rot:currentPair.rot,colors:currentPair.colors};
+  if(canPlace(t)){currentPair.pivot=t.pivot;return true}return false;
+}
+
+function rotate(){
+  if(!currentPair||animating||!gameActive)return;
+  const nr=(currentPair.rot+1)%4;
+  const t={pivot:{...currentPair.pivot},rot:nr,colors:currentPair.colors};
+  if(canPlace(t)){currentPair.rot=nr;return}
+  for(const k of[1,-1]){const kt={pivot:{r:t.pivot.r,c:t.pivot.c+k},rot:nr,colors:currentPair.colors};if(canPlace(kt)){currentPair.pivot=kt.pivot;currentPair.rot=nr;return}}
+}
+
+function hardDrop(){
+  if(!currentPair||animating||!gameActive)return;
+  const g=ghostPos();if(g){currentPair.pivot=g.pivot;currentPair.rot=g.rot;lock()}
+}
+
+function lock(){
+  if(!currentPair)return;
+  pairCells(currentPair).forEach(c=>{if(inBounds(c.r,c.c))grid[c.r][c.c]=c.color});
+  currentPair=null;cascade();
+}
+
+function gravity(){
+  let moved=false;
+  for(let c=0;c<COLS;c++)for(let r=ROWS-2;r>=0;r--)if(grid[r][c]&&!grid[r+1][c]){
+    let nr=r+1;while(nr+1<ROWS&&!grid[nr+1][c])nr++;
+    grid[nr][c]=grid[r][c];grid[r][c]=0;moved=true;
+  }return moved;
+}
+
+function findMatches(){
+  const vis=mkGrid(),groups=[];
+  for(let r=0;r<ROWS;r++)for(let c=0;c<COLS;c++)if(grid[r][c]&&!vis[r][c]){
+    const col=grid[r][c],grp=[],stk=[{r,c}];
+    while(stk.length){const p=stk.pop();if(!inBounds(p.r,p.c)||vis[p.r][p.c]||grid[p.r][p.c]!==col)continue;vis[p.r][p.c]=1;grp.push(p);stk.push({r:p.r-1,c:p.c},{r:p.r+1,c:p.c},{r:p.r,c:p.c-1},{r:p.r,c:p.c+1})}
+    if(grp.length>=MATCH_MIN)groups.push(grp);
+  }return groups;
+}
+
+function cascade(){
+  animating=true;let chain=0;
+  function step(){
+    gravity();const groups=findMatches();
+    if(groups.length>0){
+      chain++;let cleared=0;
+      groups.forEach(g=>g.forEach(p=>{grid[p.r][p.c]=0;cleared++}));
+      score+=cleared*10*chain*chain;
+      linesCleared+=cleared;level=Math.floor(linesCleared/20)+1;
+      dropInterval=Math.max(100,800-(level-1)*60);
+      sendScore();drawBoard();
+      setTimeout(()=>{gravity();drawBoard();setTimeout(step,120)},150);
+    }else{
+      animating=false;
+      if(grid[0].some(v=>v)||grid[1].some(v=>v)){playerDone();return}
+      spawn();drawBoard();
+    }
+  }
+  setTimeout(step,80);
+}
+
+function spawn(){
+  currentPair=nextPair||mkPair();nextPair=mkPair();
+  if(!canPlace(currentPair))playerDone();
+}
+
+function playerDone(){
+  gameActive=false;
+  sendScore();
+  ws.send(JSON.stringify({type:'playerGameOver',score,board:grid}));
+}
+
+// ===== GAME LOOP =====
+function loop(ts){
+  if(!gameActive)return;
+  if(!animating&&currentPair){
+    if(ts-lastDrop>dropInterval){if(!move(1,0))lock();lastDrop=ts}
+  }
+  drawBoard();
+  // Throttle score updates
+  if(ts-updateThrottle>500){sendScore();updateThrottle=ts}
+  requestAnimationFrame(loop);
+}
+
+function startLocalGame(){
+  grid=mkGrid();score=0;level=1;linesCleared=0;animating=false;
+  dropInterval=800;currentPair=null;nextPair=null;
+  gameActive=true;lastDrop=performance.now();updateThrottle=0;
+  document.getElementById('ph-score').textContent='0';
+  spawn();drawBoard();requestAnimationFrame(loop);
+}
+
+function sendScore(){
+  if(!myId)return;
+  document.getElementById('ph-score').textContent=score;
+  ws.send(JSON.stringify({type:'scoreUpdate',score,board:grid}));
+}
+
+// ===== SCREENS =====
+const scrs=document.querySelectorAll('.screen');
+function showScr(id){scrs.forEach(s=>s.classList.remove('active'));document.getElementById(id).classList.add('active')}
+
+// ===== CONTROLS =====
+document.getElementById('btn-join').addEventListener('click',joinGame);
+document.getElementById('name-input').addEventListener('keydown',e=>{if(e.key==='Enter')joinGame()});
+document.getElementById('btn-start').addEventListener('click',()=>ws.send(JSON.stringify({type:'startGame'})));
+document.getElementById('btn-again').addEventListener('click',()=>ws.send(JSON.stringify({type:'startGame'})));
+
+document.getElementById('btn-left').addEventListener('click',()=>{move(0,-1);drawBoard()});
+document.getElementById('btn-right').addEventListener('click',()=>{move(0,1);drawBoard()});
+document.getElementById('btn-rotate').addEventListener('click',()=>{rotate();drawBoard()});
+document.getElementById('btn-drop').addEventListener('click',()=>{hardDrop()});
+
+// Keyboard too
+document.addEventListener('keydown',e=>{
+  if(!gameActive)return;
+  switch(e.key){
+    case'ArrowLeft':e.preventDefault();move(0,-1);break;
+    case'ArrowRight':e.preventDefault();move(0,1);break;
+    case'ArrowDown':e.preventDefault();if(move(1,0)){score+=1;sendScore()}lastDrop=performance.now();break;
+    case'ArrowUp':e.preventDefault();rotate();break;
+    case' ':e.preventDefault();hardDrop();break;
+  }
+});
+
+function joinGame(){
+  const name=document.getElementById('name-input').value.trim();
+  if(!name){document.getElementById('err-msg').textContent='Please enter your name';return}
+  document.getElementById('err-msg').textContent='';
+  myName=name;ws.send(JSON.stringify({type:'playerJoin',name}));
+}
+
+// ===== WS MESSAGES =====
+ws.onmessage=e=>{
+  const msg=JSON.parse(e.data);
+  switch(msg.type){
+    case'joined':
+      myId=msg.playerId;myAvatar=msg.avatar;myName=msg.name;
+      document.getElementById('my-avatar').textContent=msg.avatar;
+      document.getElementById('my-name').textContent=msg.name;
+      showScr('s-waiting');break;
+    case'error':
+      document.getElementById('err-msg').textContent=msg.message;break;
+    case'gameState':
+      if(msg.state==='lobby'&&myId)showScr('s-waiting');break;
+    case'countdown':{
+      showScr('s-cd');const el=document.getElementById('ph-cd');el.textContent=msg.count;
+      el.style.animation='none';void el.offsetHeight;el.style.animation='pulse .5s ease';break}
+    case'gameStart':
+      showScr('s-play');startLocalGame();break;
+    case'timeUpdate':{
+      const s=Math.ceil(msg.timeLeft/1000),m=Math.floor(s/60),ss=s%60;
+      document.getElementById('ph-timer').textContent=m+':'+(ss<10?'0':'')+ss;
+      if(s<=0&&gameActive){gameActive=false;sendScore()}break}
+    case'gameOver':
+      gameActive=false;
+      document.getElementById('ph-final-score').textContent='Your score: '+score;
+      showScr('s-go');break;
+  }
+};
+
+ws.onclose=()=>{document.getElementById('err-msg').textContent='Disconnected. Please refresh.';showScr('s-join')};
+
+drawBoard();
+})();
+</script>
+</body>
+</html>
