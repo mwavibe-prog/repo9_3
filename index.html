@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Drop Frogs Puzzle</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div id="game-wrapper">
+  <h1>🐸 Drop Frogs 🐸</h1>
+  <div id="game-container">
+    <div id="side-panel-left">
+      <div class="panel-box">
+        <h3>SCORE</h3>
+        <div id="score">0</div>
+      </div>
+      <div class="panel-box">
+        <h3>LEVEL</h3>
+        <div id="level">1</div>
+      </div>
+      <div class="panel-box">
+        <h3>LINES</h3>
+        <div id="lines">0</div>
+      </div>
+    </div>
+    <div id="board-wrapper">
+      <canvas id="game-board"></canvas>
+      <div id="overlay" class="hidden">
+        <div id="overlay-content">
+          <h2 id="overlay-title">DROP FROGS</h2>
+          <p id="overlay-msg">Match 4+ same-color frogs to clear them!</p>
+          <button id="start-btn">START</button>
+        </div>
+      </div>
+    </div>
+    <div id="side-panel-right">
+      <div class="panel-box">
+        <h3>NEXT</h3>
+        <canvas id="next-preview"></canvas>
+      </div>
+      <div class="panel-box">
+        <h3>CONTROLS</h3>
+        <div class="controls-info">
+          <p>← → Move</p>
+          <p>↑ Rotate</p>
+          <p>↓ Soft Drop</p>
+          <p>Space Hard Drop</p>
+          <p>P Pause</p>
+        </div>
+      </div>
+      <div class="panel-box">
+        <h3>CHAIN</h3>
+        <div id="chain">0</div>
+      </div>
+    </div>
+  </div>
+</div>
+<script src="game.js"></script>
+</body>
+</html>

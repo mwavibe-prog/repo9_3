@@ -1,0 +1,152 @@
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  background: linear-gradient(135deg, #0a1628 0%, #1a2a4a 50%, #0d2137 100%);
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  color: #e0e0e0;
+  overflow: hidden;
+}
+
+#game-wrapper {
+  text-align: center;
+}
+
+h1 {
+  font-size: 2.2rem;
+  margin-bottom: 16px;
+  color: #7cff7c;
+  text-shadow: 0 0 20px rgba(124, 255, 124, 0.5);
+  letter-spacing: 4px;
+}
+
+#game-container {
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+  justify-content: center;
+}
+
+#board-wrapper {
+  position: relative;
+  border: 3px solid #4a8;
+  border-radius: 8px;
+  box-shadow: 0 0 30px rgba(68, 170, 136, 0.3), inset 0 0 20px rgba(0,0,0,0.3);
+  background: #0a0f1a;
+}
+
+#game-board {
+  display: block;
+  border-radius: 5px;
+}
+
+#overlay {
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0, 0, 0, 0.85);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border-radius: 5px;
+  z-index: 10;
+}
+
+#overlay.hidden { display: none; }
+
+#overlay-content {
+  text-align: center;
+  padding: 30px;
+}
+
+#overlay-title {
+  font-size: 2rem;
+  color: #7cff7c;
+  margin-bottom: 12px;
+  text-shadow: 0 0 15px rgba(124, 255, 124, 0.6);
+}
+
+#overlay-msg {
+  color: #aaa;
+  margin-bottom: 24px;
+  font-size: 1rem;
+}
+
+#start-btn {
+  background: linear-gradient(180deg, #5a5, #383);
+  color: white;
+  border: none;
+  padding: 14px 48px;
+  font-size: 1.2rem;
+  border-radius: 8px;
+  cursor: pointer;
+  letter-spacing: 2px;
+  font-weight: bold;
+  transition: transform 0.1s, box-shadow 0.1s;
+  box-shadow: 0 4px 15px rgba(85, 170, 85, 0.4);
+}
+
+#start-btn:hover {
+  transform: scale(1.05);
+  box-shadow: 0 6px 20px rgba(85, 170, 85, 0.6);
+}
+
+#side-panel-left, #side-panel-right {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 130px;
+}
+
+.panel-box {
+  background: rgba(20, 35, 60, 0.8);
+  border: 2px solid #3a6a5a;
+  border-radius: 8px;
+  padding: 12px;
+  text-align: center;
+}
+
+.panel-box h3 {
+  font-size: 0.75rem;
+  color: #6ab;
+  letter-spacing: 2px;
+  margin-bottom: 8px;
+}
+
+.panel-box #score,
+.panel-box #level,
+.panel-box #lines,
+.panel-box #chain {
+  font-size: 1.8rem;
+  font-weight: bold;
+  color: #7cff7c;
+  text-shadow: 0 0 10px rgba(124, 255, 124, 0.4);
+}
+
+#next-preview {
+  display: block;
+  margin: 0 auto;
+  width: 90px;
+  height: 90px;
+}
+
+.controls-info p {
+  font-size: 0.7rem;
+  color: #8aa;
+  margin: 4px 0;
+  text-align: left;
+}
+
+@media (max-width: 700px) {
+  #game-container { flex-direction: column; align-items: center; }
+  #side-panel-left, #side-panel-right {
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: center;
+    min-width: auto;
+  }
+  .panel-box { min-width: 80px; }
+  h1 { font-size: 1.5rem; }
+}
