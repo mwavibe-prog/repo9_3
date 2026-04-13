@@ -142,6 +142,7 @@ function FrogEngine(canvas, onScoreChange) {
     cellAnims = {};
     if (self.onUndoChange) self.onUndoChange(undoStack.length);
     if (onScoreChange) onScoreChange();
+    ensureRaf();
   };
   self.getUndoCount = function() { return undoStack.length; };
 
@@ -234,7 +235,12 @@ function FrogEngine(canvas, onScoreChange) {
   }
 
   // ===== RENDER =====
+  var _rafRunning = false;
+  function ensureRaf() {
+    if (!_rafRunning) { _rafRunning = true; requestAnimationFrame(render); }
+  }
   function render(time) {
+    _rafRunning = false;
     if (!self.active && !dropping && !resolving && particles.length === 0 && floatingTexts.length === 0) return;
     ctx.clearRect(0, 0, W, H);
 
@@ -293,6 +299,7 @@ function FrogEngine(canvas, onScoreChange) {
     // Legend
     drawLegend(ctx, time);
 
+    _rafRunning = true;
     requestAnimationFrame(render);
   }
 
@@ -330,6 +337,7 @@ function FrogEngine(canvas, onScoreChange) {
     discover(nextTier);
     dropping = { col:col, tier:nextTier, y:PREVIEW_H/2, targetY:rowToY(lr), vy:0, row:lr };
     nextTier = randTier();
+    ensureRaf();
     animateDrop();
   }
 
@@ -428,6 +436,7 @@ function FrogEngine(canvas, onScoreChange) {
         }, 270);
       } else {
         resolving = false;
+        ensureRaf();
         // Game over: ALL columns full
         var allFull = true;
         for (var c2 = 0; c2 < COLS; c2++) { if (grid[c2][0] === 0) { allFull = false; break; } }
@@ -461,7 +470,7 @@ function FrogEngine(canvas, onScoreChange) {
     loadDiscovered();
     nextTier = randTier();
     if (self.onUndoChange) self.onUndoChange(0);
-    requestAnimationFrame(render);
+    ensureRaf();
   };
   self.stop = function() { self.active = false; updateBest(); };
   self.getBoard = function() { return grid; };

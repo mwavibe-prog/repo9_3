@@ -51,6 +51,7 @@ body{font-family:'Segoe UI',Tahoma,sans-serif;min-height:100vh;background:linear
   <div class="join-sub">Enter your name to play!</div>
   <input type="text" id="name-input" class="name-input" placeholder="Your Name" maxlength="15" autocomplete="off">
   <button class="big-btn btn-green" id="btn-join">JOIN GAME</button>
+  <button class="big-btn btn-orange" id="btn-solo" style="margin-top:12px;display:none">PLAY SOLO</button>
   <div class="error-msg" id="err-msg"></div>
 </div>
 
@@ -167,7 +168,40 @@ ws.onmessage = function(e){
       showScr('s-go');break;
   }
 };
-ws.onclose=function(){document.getElementById('err-msg').textContent='Disconnected. Refresh page.';showScr('s-join')};
+ws.onerror=function(){};
+ws.onclose=function(){
+  document.getElementById('err-msg').textContent='No server found.';
+  document.getElementById('btn-solo').style.display='';
+  document.getElementById('btn-join').style.display='none';
+  showScr('s-join');
+};
+
+// --- SOLO PLAY (no server needed) ---
+function startSolo() {
+  showScr('s-play');
+  document.getElementById('ph-timer').textContent='Solo';
+  engine = new FrogEngine(document.getElementById('gc'), function(){
+    document.getElementById('ph-score').textContent=engine.score;
+    document.getElementById('ph-best').textContent=engine.bestScore;
+  });
+  engine.onUndoChange = function(count){
+    document.getElementById('undo-count').textContent=count;
+    var btn=document.getElementById('btn-undo');
+    if(count>0) btn.classList.add('has-undo'); else btn.classList.remove('has-undo');
+  };
+  engine.onGameOver = function(){
+    document.getElementById('ph-final').textContent='Your score: '+engine.score;
+    document.getElementById('ph-final-best').textContent='Best: '+engine.bestScore;
+    showScr('s-go');
+  };
+  document.getElementById('ph-best').textContent=engine.bestScore;
+  engine.start();
+}
+document.getElementById('btn-solo').onclick=startSolo;
+document.getElementById('btn-again').onclick=function(){
+  if(ws.readyState===1) ws.send(JSON.stringify({type:'startGame'}));
+  else startSolo();
+};
 })();
 </script>
 </body>
