@@ -255,6 +255,6 @@ wss.on("connection", function(ws) {
 });
 
 server.listen(PORT, function() {
-  console.log("\n🐸 Feed Teto Server running on port " + PORT);
+  console.log("\n🐸 Frog Puzzle Server running on port " + PORT);
   console.log("   Open http://localhost:" + PORT + " for the TV host screen\n");
 });
