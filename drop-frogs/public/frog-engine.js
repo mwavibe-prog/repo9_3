@@ -107,6 +107,9 @@ function FrogEngine(canvas, onScoreChange) {
   var discovered = {}; // tier -> true
   var undoStack = []; // snapshots
   var MAX_UNDO = 10;
+  var autoDropTimer = null;
+  var AUTO_DROP_MS = 3000; // auto-drop every 3 seconds if player doesn't act
+  var hoverCol = 3; // column the next frog hovers over
 
   function mkGrid() { var g=[]; for(var c=0;c<COLS;c++){g[c]=[];for(var r=0;r<ROWS;r++)g[c][r]=0;} return g; }
   function cloneGrid(g) { var n=[]; for(var c=0;c<COLS;c++){n[c]=g[c].slice();} return n; }
@@ -284,11 +287,22 @@ function FrogEngine(canvas, onScoreChange) {
     // Dragged frog
     if (isDragging) drawFrog(ctx, dragX, dragY, CELL, nextTier, time, 1.1, 1.1, 0.85);
 
-    // Preview frog
+    // Preview frog hovering above target column
     if (!isDragging && !dropping && !resolving && self.active) {
-      drawFrog(ctx, W/2, PREVIEW_H/2, CELL, nextTier, time);
-      ctx.fillStyle = "rgba(124,255,124,0.35)"; ctx.font = "bold "+Math.round(CELL*0.26)+"px sans-serif"; ctx.textAlign = "center";
-      ctx.fillText("drag or tap a column", W/2, PREVIEW_H - 3);
+      var prevX = colToX(hoverCol);
+      // subtle bounce animation
+      var bobY = PREVIEW_H / 2 + Math.sin(time * 0.004) * 3;
+      drawFrog(ctx, prevX, bobY, CELL, nextTier, time);
+      // column indicator line
+      ctx.strokeStyle = "rgba(124,255,124,0.18)"; ctx.lineWidth = 2; ctx.setLineDash([4,4]);
+      ctx.beginPath(); ctx.moveTo(prevX, PREVIEW_H); ctx.lineTo(prevX, PREVIEW_H + ROWS * CELL); ctx.stroke();
+      ctx.setLineDash([]);
+      // ghost at landing
+      var lr2 = findLanding(hoverCol);
+      if (lr2 >= 0) drawFrog(ctx, prevX, rowToY(lr2), CELL, nextTier, time, 1, 1, 0.18);
+      // hint
+      ctx.fillStyle = "rgba(124,255,124,0.3)"; ctx.font = "bold "+Math.round(CELL*0.24)+"px sans-serif"; ctx.textAlign = "center";
+      ctx.fillText("tap column to drop", W/2, PREVIEW_H - 3);
     }
 
     // Particles & floating texts
@@ -309,8 +323,14 @@ function FrogEngine(canvas, onScoreChange) {
     var rect = canvas.getBoundingClientRect();
     var x = (px - rect.left) * (W / rect.width);
     var y = (py - rect.top) * (H / rect.height);
-    if (y >= PREVIEW_H && y < PREVIEW_H + ROWS * CELL) { var col = xToCol(x); if (col >= 0) { doDrop(col); return; } }
+    // Tap on board → drop into that column
+    if (y >= PREVIEW_H && y < PREVIEW_H + ROWS * CELL) {
+      var col = xToCol(x);
+      if (col >= 0) { hoverCol = col; doDrop(col); return; }
+    }
+    // Tap on preview area → start drag
     isDragging = true; dragX = x; dragY = y; dragCol = xToCol(x);
+    if (dragCol >= 0) hoverCol = dragCol;
   }
   function ptrMove(px, py) {
     if (!isDragging) return;
@@ -318,8 +338,9 @@ function FrogEngine(canvas, onScoreChange) {
     dragX = (px - rect.left) * (W / rect.width);
     dragY = (py - rect.top) * (H / rect.height);
     dragCol = xToCol(dragX);
+    if (dragCol >= 0) hoverCol = dragCol;
   }
-  function ptrUp() { if (!isDragging) return; isDragging = false; if (dragCol >= 0) doDrop(dragCol); dragCol = -1; }
+  function ptrUp() { if (!isDragging) return; isDragging = false; if (dragCol >= 0) { hoverCol = dragCol; doDrop(dragCol); } dragCol = -1; }
 
   canvas.addEventListener("mousedown", function(e){e.preventDefault();ptrDown(e.clientX,e.clientY)});
   canvas.addEventListener("mousemove", function(e){e.preventDefault();ptrMove(e.clientX,e.clientY)});
@@ -328,13 +349,34 @@ function FrogEngine(canvas, onScoreChange) {
   canvas.addEventListener("touchmove", function(e){e.preventDefault();var t=e.touches[0];ptrMove(t.clientX,t.clientY)},{passive:false});
   canvas.addEventListener("touchend", function(e){e.preventDefault();ptrUp()},{passive:false});
 
+  // ===== AUTO DROP TIMER =====
+  function resetAutoTimer() {
+    clearTimeout(autoDropTimer);
+    if (!self.active) return;
+    autoDropTimer = setTimeout(function() {
+      if (!self.active || dropping || resolving) return;
+      // auto-drop into the hover column (or random if full)
+      var col = hoverCol;
+      if (findLanding(col) < 0) {
+        // pick a random non-full column
+        var open = [];
+        for (var c = 0; c < COLS; c++) { if (findLanding(c) >= 0) open.push(c); }
+        if (open.length === 0) return;
+        col = open[Math.floor(Math.random() * open.length)];
+      }
+      doDrop(col);
+    }, AUTO_DROP_MS);
+  }
+
   // ===== DROP =====
   function doDrop(col) {
     if (dropping || resolving || !self.active) return;
     var lr = findLanding(col);
     if (lr < 0) return;
+    clearTimeout(autoDropTimer);
     pushUndo();
     discover(nextTier);
+    hoverCol = col;
     dropping = { col:col, tier:nextTier, y:PREVIEW_H/2, targetY:rowToY(lr), vy:0, row:lr };
     nextTier = randTier();
     ensureRaf();
@@ -442,9 +484,12 @@ function FrogEngine(canvas, onScoreChange) {
         for (var c2 = 0; c2 < COLS; c2++) { if (grid[c2][0] === 0) { allFull = false; break; } }
         if (allFull) {
           self.active = false;
+          clearTimeout(autoDropTimer);
           updateBest();
           if (onScoreChange) onScoreChange();
           if (self.onGameOver) self.onGameOver();
+        } else {
+          resetAutoTimer();
         }
       }
     }
@@ -469,9 +514,11 @@ function FrogEngine(canvas, onScoreChange) {
     self.bestScore = parseInt(localStorage.getItem("dropFrogsBest") || "0", 10);
     loadDiscovered();
     nextTier = randTier();
+    hoverCol = 3;
     if (self.onUndoChange) self.onUndoChange(0);
     ensureRaf();
+    resetAutoTimer();
   };
-  self.stop = function() { self.active = false; updateBest(); };
+  self.stop = function() { self.active = false; clearTimeout(autoDropTimer); updateBest(); };
   self.getBoard = function() { return grid; };
 }
