@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Feed Teto - TV Host</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:linear-gradient(135deg,#e8f5e9,#c8e6c9,#a5d6a7);font-family:'Segoe UI',Tahoma,sans-serif;min-height:100vh;overflow:hidden;color:#333}
+.header{display:flex;justify-content:center;align-items:center;gap:30px;padding:12px 30px;background:white;box-shadow:0 2px 15px rgba(0,0,0,0.1)}
+.header img{height:65px;width:auto}
+.header .title{font-size:2.4rem;font-weight:900;color:#2e7d32;letter-spacing:3px}
+.main{height:calc(100vh - 90px);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:15px}
+.screen{display:none;width:100%;max-width:1200px;text-align:center}
+.screen.active{display:flex;flex-direction:column;align-items:center}
+.lobby-title{font-size:3rem;color:#2e7d32;margin-bottom:8px}
+.lobby-sub{font-size:1.3rem;color:#555;margin-bottom:20px}
+.qr-box{display:flex;align-items:center;gap:25px;background:white;border-radius:20px;padding:25px 35px;margin-bottom:20px;box-shadow:0 8px 30px rgba(0,0,0,0.1)}
+.qr-box img{width:200px;height:200px;border-radius:10px}
+.qr-info h3{font-size:1.4rem;color:#2e7d32;margin-bottom:6px}
+.qr-info p{font-size:1rem;color:#666}
+.qr-info .url{font-size:1.1rem;color:#1565c0;font-weight:bold;word-break:break-all}
+.qr-info .room-code{font-size:2.5rem;color:#2e7d32;font-weight:900;letter-spacing:6px;margin:8px 0}
+.pcount{font-size:1.2rem;color:#666;margin-bottom:8px}
+.chips{display:flex;flex-wrap:wrap;gap:12px;justify-content:center;margin:12px 0}
+.chip{background:white;border-radius:50px;padding:8px 20px;font-size:1.2rem;box-shadow:0 3px 10px rgba(0,0,0,0.08);display:flex;align-items:center;gap:8px;animation:pop .3s ease}
+@keyframes pop{from{transform:scale(0);opacity:0}to{transform:scale(1);opacity:1}}
+.hint{font-size:1rem;color:#888;margin-top:8px}
+.cd-num{font-size:14rem;font-weight:900;color:#2e7d32;text-shadow:4px 4px 0 #a5d6a7;animation:pulse .5s ease}
+.cd-label{font-size:2rem;color:#555;margin-bottom:10px}
+@keyframes pulse{0%{transform:scale(1.5);opacity:0}100%{transform:scale(1);opacity:1}}
+.play-layout{display:flex;align-items:center;gap:50px;justify-content:center}
+.teto-area{display:flex;flex-direction:column;align-items:center}
+.teto-char{font-size:10rem;animation:bounce 1s ease infinite;line-height:1}
+@keyframes bounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-15px)}}
+.teto-speech{background:white;border-radius:20px;padding:18px 30px;font-size:2rem;font-weight:bold;box-shadow:0 5px 20px rgba(0,0,0,0.1);position:relative;margin-bottom:12px;max-width:350px}
+.teto-speech::after{content:'';position:absolute;bottom:-14px;left:50%;transform:translateX(-50%);border:14px solid transparent;border-top-color:white}
+.food-show{font-size:7rem;margin:10px 0}
+.food-name{font-size:1.8rem;font-weight:bold}
+.round-info{font-size:1.5rem;color:#555;margin-bottom:10px}
+.timer-bg{width:400px;height:18px;background:#ddd;border-radius:9px;overflow:hidden;margin-top:12px}
+.timer-fill{height:100%;background:linear-gradient(90deg,#4caf50,#8bc34a);border-radius:9px;transition:width .2s}
+.round-result{font-size:2rem;color:#2e7d32;margin-bottom:15px}
+.correct-ans{font-size:1.4rem;color:#555;margin-bottom:15px}
+.correct-ans span{font-size:3rem}
+.lb{width:100%;max-width:550px;margin:0 auto}
+.lb h2{font-size:1.5rem;color:#2e7d32;margin-bottom:10px;letter-spacing:2px}
+.lb-item{display:flex;align-items:center;gap:12px;background:white;border-radius:14px;padding:10px 20px;margin-bottom:8px;font-size:1.2rem;box-shadow:0 2px 8px rgba(0,0,0,0.06)}
+.lb-item:first-child{border:2px solid rgba(255,215,0,0.5);background:rgba(255,250,230,0.9)}
+.lb-item .rank{font-weight:900;font-size:1.4rem;color:#2e7d32;min-width:32px}
+.lb-item:first-child .rank{color:#ffc107}
+.lb-item:nth-child(2) .rank{color:#90a4ae}
+.lb-item:nth-child(3) .rank{color:#bf8040}
+.lb-item .av{font-size:1.6rem}
+.lb-item .nm{flex:1;font-weight:600;text-align:left}
+.lb-item .sc{font-weight:900;color:#2e7d32}
+.go-title{font-size:3.5rem;font-weight:900;color:#2e7d32;margin-bottom:8px}
+.winner{font-size:2rem;margin-bottom:20px}
+.winner .wav{font-size:4rem}
+.go-hint{font-size:1rem;color:#888;margin-top:12px}
+</style>
+</head>
+<body>
+<div class="header">
+  <img src="images/crest-logo.svg" alt="Crest Secondary">
+  <div class="title">🐸 FEED TETO 🐸</div>
+  <img src="images/weeswares-logo.svg" alt="WeesWares">
+</div>
+<div class="main">
+  <div id="s-lobby" class="screen active">
+    <div class="lobby-title">Feed Teto!</div>
+    <div class="lobby-sub">Scan the QR code on your phone to join!</div>
+    <div class="qr-box">
+      <img id="qr-img" src="" alt="QR Code">
+      <div class="qr-info">
+        <h3>Join the game!</h3>
+        <p>Scan with your phone camera or visit:</p>
+        <p class="url" id="join-url">Loading...</p>
+        <div class="room-code" id="room-code">----</div>
+        <p>Room Code</p>
+      </div>
+    </div>
+    <div class="pcount" id="pcount">Waiting for players... (0/15)</div>
+    <div class="chips" id="pchips"></div>
+    <div class="hint">Any player can press START on their phone!</div>
+  </div>
+  <div id="s-cd" class="screen">
+    <div class="cd-label">Get Ready!</div>
+    <div class="cd-num" id="cd-num">3</div>
+  </div>
+  <div id="s-play" class="screen">
+    <div class="round-info" id="round-info">Round 1 of 10</div>
+    <div class="play-layout">
+      <div class="teto-area">
+        <div class="teto-speech" id="teto-speech">I want food!</div>
+        <div class="teto-char">🐸</div>
+      </div>
+      <div>
+        <div class="food-show" id="food-show">🍎</div>
+        <div class="food-name" id="food-name">Apple</div>
+      </div>
+    </div>
+    <div class="timer-bg"><div class="timer-fill" id="timer-fill"></div></div>
+  </div>
+  <div id="s-roundend" class="screen">
+    <div class="round-result" id="round-result">Round 1 Complete!</div>
+    <div class="correct-ans" id="correct-ans">The answer was: <span>🍎</span> Apple</div>
+    <div class="lb" id="lb-round"></div>
+  </div>
+  <div id="s-gameover" class="screen">
+    <div class="go-title">Game Over!</div>
+    <div class="winner" id="winner"></div>
+    <div class="lb" id="lb-final"></div>
+    <div class="go-hint">Press PLAY AGAIN on any phone to restart!</div>
+  </div>
+</div>
+<script>
+(function(){
+  var screens = document.querySelectorAll('.screen');
+  function show(id){for(var i=0;i<screens.length;i++)screens[i].classList.remove('active');document.getElementById(id).classList.add('active');}
+
+  var roomCode = null;
+  var ws = null;
+  var timerInterval = null;
+
+  // Create room and connect
+  fetch('/api/create-room').then(function(r){return r.json()}).then(function(data){
+    roomCode = data.code;
+    document.getElementById('qr-img').src = data.qr;
+    document.getElementById('join-url').textContent = data.url;
+    document.getElementById('room-code').textContent = data.code;
+    connectWs();
+  });
+
+  function connectWs(){
+    var proto = location.protocol === 'https:' ? 'wss://' : 'ws://';
+    ws = new WebSocket(proto + location.host);
+    ws.onopen = function(){ ws.send(JSON.stringify({type:'hostJoin',room:roomCode})); };
+    ws.onmessage = function(e){
+      var msg = JSON.parse(e.data);
+      switch(msg.type){
+        case 'gameState': handleState(msg); break;
+        case 'countdown': showCd(msg.count); break;
+        case 'roundStart': handleRound(msg); break;
+        case 'roundEnd': handleRoundEnd(msg); break;
+        case 'gameOver': handleGameOver(msg); break;
+      }
+    };
+  }
+
+  function handleState(msg){
+    if(msg.state==='lobby'){
+      show('s-lobby');
+      document.getElementById('pcount').textContent='Players joined: '+msg.playerCount+'/15';
+      var el=document.getElementById('pchips'); el.innerHTML='';
+      msg.players.forEach(function(p){var c=document.createElement('div');c.className='chip';c.innerHTML='<span>'+p.avatar+'</span> '+p.name;el.appendChild(c);});
+    }
+  }
+
+  function showCd(n){
+    show('s-cd');
+    var el=document.getElementById('cd-num');el.textContent=n;
+    el.style.animation='none';void el.offsetHeight;el.style.animation='pulse .5s ease';
+  }
+
+  function handleRound(msg){
+    show('s-play');
+    document.getElementById('round-info').textContent='Round '+msg.round+' of '+msg.maxRounds;
+    document.getElementById('teto-speech').textContent='I want '+msg.targetFood.name+'!';
+    document.getElementById('food-show').textContent=msg.targetFood.emoji;
+    document.getElementById('food-name').textContent=msg.targetFood.name;
+    var start=Date.now(), dur=msg.duration;
+    clearInterval(timerInterval);
+    var bar=document.getElementById('timer-fill'); bar.style.width='100%';
+    timerInterval=setInterval(function(){
+      var pct=Math.max(0,100-(Date.now()-start)/dur*100);
+      bar.style.width=pct+'%';
+      bar.style.background=pct<=30?'linear-gradient(90deg,#f44336,#ff9800)':'linear-gradient(90deg,#4caf50,#8bc34a)';
+      if(pct<=0)clearInterval(timerInterval);
+    },50);
+  }
+
+  function handleRoundEnd(msg){
+    show('s-roundend');clearInterval(timerInterval);
+    document.getElementById('round-result').textContent='Round '+msg.round+' Complete!';
+    document.getElementById('correct-ans').innerHTML='The answer was: <span style="font-size:3rem">'+msg.targetFood.emoji+'</span> '+msg.targetFood.name;
+    renderLb('lb-round',msg.leaderboard,'LEADERBOARD');
+  }
+
+  function handleGameOver(msg){
+    show('s-gameover');clearInterval(timerInterval);
+    if(msg.leaderboard.length>0){
+      document.getElementById('winner').innerHTML='<div class="wav">'+msg.leaderboard[0].avatar+'</div><div>'+msg.leaderboard[0].name+' wins with '+msg.leaderboard[0].score+' points!</div>';
+    }
+    renderLb('lb-final',msg.leaderboard,'');
+  }
+
+  function renderLb(id,players,title){
+    var el=document.getElementById(id);
+    var html=title?'<h2>'+title+'</h2>':'';
+    players.forEach(function(p,i){
+      html+='<div class="lb-item"><span class="rank">#'+(i+1)+'</span><span class="av">'+p.avatar+'</span><span class="nm">'+p.name+'</span><span class="sc">'+p.score+' pts</span></div>';
+    });
+    el.innerHTML=html;
+  }
+})();
+</script>
+</body>
+</html>
