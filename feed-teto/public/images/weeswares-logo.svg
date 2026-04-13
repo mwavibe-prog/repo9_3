@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 120" width="300" height="120">
+  <!-- W shape with purple and orange -->
+  <path d="M150,15 L125,85" stroke="#5b2d8e" stroke-width="18" fill="none" stroke-linecap="round"/>
+  <path d="M125,85 L160,15" stroke="#e8873a" stroke-width="18" fill="none" stroke-linecap="round"/>
+  <path d="M160,15 L195,85" stroke="#e8873a" stroke-width="18" fill="none" stroke-linecap="round"/>
+  <!-- Small purple triangle dot -->
+  <polygon points="148,38 155,38 151.5,45" fill="#5b2d8e"/>
+  <!-- Text -->
+  <text x="30" y="105" fill="#4a5568" font-family="Arial,sans-serif" font-weight="bold" font-size="28" letter-spacing="2">WEESWARES</text>
+</svg>
