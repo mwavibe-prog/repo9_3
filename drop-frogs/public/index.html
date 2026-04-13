@@ -135,9 +135,9 @@ body{background:linear-gradient(135deg,#0a1628,#1a2a4a,#0d2137);font-family:'Seg
 
 <script>
 (function(){
-  const COLS=6,ROWS=13,CELL_MINI=8;
-  const FROG_FILLS=["","#4caf50","#f44336","#2196f3","#ffeb3b","#9c27b0"];
-  const FROG_DARKS=["","#2e7d32","#c62828","#1565c0","#f9a825","#6a1b9a"];
+  const COLS=7,ROWS=12,CELL_MINI=8;
+  // 12 tier colors matching frog-engine.js
+  const TIER_FILLS=["","#81c784","#64b5f6","#e57373","#ffb74d","#fff176","#ce93d8","#f06292","#4db6ac","#7986cb","#ffd54f","#e040fb","#7c4dff"];
 
   const ws=new WebSocket((location.protocol==='https:'?'wss://':'ws://')+location.host);
   const screens=document.querySelectorAll('.screen');
@@ -212,7 +212,7 @@ body{background:linear-gradient(135deg,#0a1628,#1a2a4a,#0d2137);font-family:'Seg
       let wrap=map[p.id];
       if(!wrap){
         wrap=document.createElement('div');wrap.className='mini-board';wrap.dataset.pid=p.id;
-        wrap.innerHTML=`<div class="mb-name"><span class="mb-avatar">${p.avatar}</span> ${p.name}</div><canvas width="${COLS*CELL_MINI}" height="${(ROWS-1)*CELL_MINI}"></canvas><div class="mb-score">0</div>`;
+        wrap.innerHTML=`<div class="mb-name"><span class="mb-avatar">${p.avatar}</span> ${p.name}</div><canvas width="${COLS*CELL_MINI}" height="${ROWS*CELL_MINI}"></canvas><div class="mb-score">0</div>`;
         container.appendChild(wrap);
       }
       wrap.querySelector('.mb-score').textContent=p.score+' pts';
@@ -220,13 +220,15 @@ body{background:linear-gradient(135deg,#0a1628,#1a2a4a,#0d2137);font-family:'Seg
       const ctx=cvs.getContext('2d');
       ctx.clearRect(0,0,cvs.width,cvs.height);
       ctx.fillStyle='#0a0f1a';ctx.fillRect(0,0,cvs.width,cvs.height);
+      // boardSnapshot is column-major: board[col][row]
       if(p.boardSnapshot){
-        for(let r=1;r<ROWS;r++){
-          for(let c=0;c<COLS;c++){
-            const v=p.boardSnapshot[r]&&p.boardSnapshot[r][c];
+        for(let c=0;c<COLS;c++){
+          if(!p.boardSnapshot[c])continue;
+          for(let r=0;r<ROWS;r++){
+            const v=p.boardSnapshot[c][r];
             if(v){
-              ctx.fillStyle=FROG_FILLS[v]||'#888';
-              ctx.beginPath();ctx.arc(c*CELL_MINI+CELL_MINI/2,(r-1)*CELL_MINI+CELL_MINI/2,CELL_MINI/2-1,0,Math.PI*2);ctx.fill();
+              ctx.fillStyle=TIER_FILLS[v]||'#888';
+              ctx.beginPath();ctx.arc(c*CELL_MINI+CELL_MINI/2,r*CELL_MINI+CELL_MINI/2,CELL_MINI/2-1,0,Math.PI*2);ctx.fill();
             }
           }
         }
