@@ -28,12 +28,19 @@ body{font-family:'Segoe UI',Tahoma,sans-serif;min-height:100vh;background:linear
 .ph-cd-label{font-size:1.5rem;color:#aaa;margin-top:40px}
 .ph-cd{font-size:10rem;font-weight:900;color:#7cff7c;animation:pulse .5s ease}
 @keyframes pulse{0%{transform:scale(1.5);opacity:0}100%{transform:scale(1);opacity:1}}
-.play-hud{display:flex;justify-content:space-between;width:100%;max-width:400px;margin-bottom:6px;font-size:.95rem;color:#aaa}
+.play-hud{display:flex;justify-content:space-between;align-items:center;width:100%;max-width:420px;margin-bottom:6px;font-size:.9rem;color:#aaa;gap:8px}
 .play-hud .sc{color:#7cff7c;font-weight:900;font-size:1.1rem}
+.play-hud .best{color:#ffd54f;font-weight:700;font-size:.85rem}
 #gc{display:block;border:2px solid #4a8;border-radius:8px;background:#0a0f1a;touch-action:none}
-.drag-hint{font-size:.8rem;color:#6a8;margin-top:6px}
+.play-controls{display:flex;gap:10px;margin-top:8px;width:100%;max-width:420px;justify-content:space-between;align-items:center}
+.undo-btn{padding:10px 20px;font-size:1rem;font-weight:700;color:#fff;background:linear-gradient(180deg,#78909c,#546e7a);border:none;border-radius:10px;cursor:pointer;display:flex;align-items:center;gap:6px;opacity:0.5;transition:opacity .2s}
+.undo-btn.has-undo{opacity:1}
+.undo-btn:active{transform:scale(.93)}
+.undo-badge{background:rgba(255,255,255,0.25);border-radius:8px;padding:1px 6px;font-size:.75rem}
+.drag-hint{font-size:.78rem;color:#6a8}
 .ph-go-title{font-size:2.2rem;font-weight:900;color:#7cff7c;margin-top:30px;margin-bottom:8px}
-.ph-score{font-size:1.6rem;margin-bottom:20px}
+.ph-score{font-size:1.6rem;margin-bottom:8px}
+.ph-best{font-size:1.1rem;color:#ffd54f;margin-bottom:20px}
 </style>
 </head>
 <body>
@@ -63,15 +70,20 @@ body{font-family:'Segoe UI',Tahoma,sans-serif;min-height:100vh;background:linear
 <div id="s-play" class="screen">
   <div class="play-hud">
     <div>Score: <span class="sc" id="ph-score">0</span></div>
+    <div class="best">Best: <span id="ph-best">0</span></div>
     <div id="ph-timer" style="color:#7cff7c;font-weight:bold">2:00</div>
   </div>
   <canvas id="gc"></canvas>
-  <div class="drag-hint">Drag the frog to a column, or tap a column!</div>
+  <div class="play-controls">
+    <button class="undo-btn" id="btn-undo">↩ Undo <span class="undo-badge" id="undo-count">0</span></button>
+    <div class="drag-hint">Drag the frog or tap a column</div>
+  </div>
 </div>
 
 <div id="s-go" class="screen">
   <div class="ph-go-title">Time's Up!</div>
   <div class="ph-score" id="ph-final">Your score: 0</div>
+  <div class="ph-best" id="ph-final-best">Best: 0</div>
   <div style="color:#aaa;margin-bottom:20px">Look at the TV for results!</div>
   <button class="big-btn btn-green" id="btn-again">PLAY AGAIN</button>
 </div>
@@ -80,38 +92,43 @@ body{font-family:'Segoe UI',Tahoma,sans-serif;min-height:100vh;background:linear
 <script>
 (function(){
 "use strict";
-// ===== NETWORKING & SCREENS =====
-const ws = new WebSocket((location.protocol==='https:'?'wss://':'ws://')+location.host);
-let myId=null, myName='', myAvatar='';
-const scrs = document.querySelectorAll('.screen');
-function showScr(id){scrs.forEach(s=>s.classList.remove('active'));document.getElementById(id).classList.add('active')}
+var ws = new WebSocket((location.protocol==='https:'?'wss://':'ws://')+location.host);
+var myId=null, myName='', myAvatar='';
+var scrs = document.querySelectorAll('.screen');
+function showScr(id){for(var i=0;i<scrs.length;i++)scrs[i].classList.remove('active');document.getElementById(id).classList.add('active');}
 
 document.getElementById('btn-join').onclick = joinGame;
-document.getElementById('name-input').onkeydown = e=>{if(e.key==='Enter')joinGame()};
-document.getElementById('btn-start').onclick = ()=>ws.send(JSON.stringify({type:'startGame'}));
-document.getElementById('btn-again').onclick = ()=>ws.send(JSON.stringify({type:'startGame'}));
+document.getElementById('name-input').onkeydown = function(e){if(e.key==='Enter')joinGame()};
+document.getElementById('btn-start').onclick = function(){ws.send(JSON.stringify({type:'startGame'}))};
+document.getElementById('btn-again').onclick = function(){ws.send(JSON.stringify({type:'startGame'}))};
 
 function joinGame(){
-  const n=document.getElementById('name-input').value.trim();
-  if(!n){document.getElementById('err-msg').textContent='Please enter your name';return}
+  var n=document.getElementById('name-input').value.trim();
+  if(!n){document.getElementById('err-msg').textContent='Please enter your name';return;}
   document.getElementById('err-msg').textContent='';
   myName=n; ws.send(JSON.stringify({type:'playerJoin',name:n}));
 }
 
-let engine = null;
-let reportThrottle = 0;
+var engine = null;
+var reportThrottle = 0;
 
 function reportScore(){
   if(!myId||!engine)return;
-  const now=performance.now();
+  var now=performance.now();
   if(now-reportThrottle<400)return;
   reportThrottle=now;
   document.getElementById('ph-score').textContent=engine.score;
+  document.getElementById('ph-best').textContent=engine.bestScore;
   ws.send(JSON.stringify({type:'scoreUpdate',score:engine.score,board:engine.getBoard()}));
 }
 
-ws.onmessage = e=>{
-  const msg=JSON.parse(e.data);
+// Undo button
+document.getElementById('btn-undo').onclick = function(){
+  if(engine) engine.undo();
+};
+
+ws.onmessage = function(e){
+  var msg=JSON.parse(e.data);
   switch(msg.type){
     case 'joined':
       myId=msg.playerId;myAvatar=msg.avatar;myName=msg.name;
@@ -122,25 +139,35 @@ ws.onmessage = e=>{
       document.getElementById('err-msg').textContent=msg.message;break;
     case 'gameState':
       if(msg.state==='lobby'&&myId)showScr('s-waiting');break;
-    case 'countdown':{
-      showScr('s-cd');const el=document.getElementById('ph-cd');el.textContent=msg.count;
-      el.style.animation='none';void el.offsetHeight;el.style.animation='pulse .5s ease';break;}
+    case 'countdown':
+      showScr('s-cd');var el=document.getElementById('ph-cd');el.textContent=msg.count;
+      el.style.animation='none';void el.offsetHeight;el.style.animation='pulse .5s ease';break;
     case 'gameStart':
       showScr('s-play');
       engine = new FrogEngine(document.getElementById('gc'), reportScore);
+      engine.onUndoChange = function(count){
+        document.getElementById('undo-count').textContent = count;
+        var btn = document.getElementById('btn-undo');
+        if(count > 0) btn.classList.add('has-undo'); else btn.classList.remove('has-undo');
+      };
+      engine.onGameOver = function(){
+        reportScore();
+      };
+      document.getElementById('ph-best').textContent = engine.bestScore;
       engine.start();
       break;
-    case 'timeUpdate':{
-      const s=Math.ceil(msg.timeLeft/1000),m=Math.floor(s/60),ss=s%60;
+    case 'timeUpdate':
+      var s=Math.ceil(msg.timeLeft/1000),m=Math.floor(s/60),ss=s%60;
       document.getElementById('ph-timer').textContent=m+':'+(ss<10?'0':'')+ss;
-      if(s<=0&&engine&&engine.active){engine.stop();reportScore();}break;}
+      if(s<=0&&engine&&engine.active){engine.stop();reportScore();}break;
     case 'gameOver':
       if(engine){engine.stop();reportScore();}
       document.getElementById('ph-final').textContent='Your score: '+(engine?engine.score:0);
+      document.getElementById('ph-final-best').textContent='Best: '+(engine?engine.bestScore:0);
       showScr('s-go');break;
   }
 };
-ws.onclose=()=>{document.getElementById('err-msg').textContent='Disconnected. Refresh page.';showScr('s-join')};
+ws.onclose=function(){document.getElementById('err-msg').textContent='Disconnected. Refresh page.';showScr('s-join')};
 })();
 </script>
 </body>
